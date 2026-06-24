@@ -1,0 +1,14 @@
+streamlit
+opencv-python
+ultralytics
+ollama
+twilio
+python-dotenv
+pillow
+numpy
+fastapi
+uvicorn
+python-multipart
+google-generativeai
+groq
+requests

@@ -1,0 +1,31 @@
+# Secrets & Configuration
+.env
+model_config.json
+status.json
+.admin_access
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.pytest_cache/
+
+# AI Models
+models/*.pt
+models/*.onnx
+models/*.bin
+
+# Video/Media
+*.mp4
+*.avi
+*.mkv
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Any other local temporary files
+scratch/
