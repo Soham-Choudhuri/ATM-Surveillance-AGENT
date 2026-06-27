@@ -1,3 +1,25 @@
+# Changelog: Version 4.0
+
+## 1. Advanced Threat Detection Features
+- **Multi-Modal Audio Processing**: The system now listens as well as it watches.
+  - *Live Webcam*: Monitors the host machine's microphone in the background for loud volume spikes (screams, glass breaking) and injects an alert directly into the AI's reasoning context.
+  - *Video Files*: Uploaded video files are automatically processed via FFmpeg. The audio track is extracted and played in perfect sync with the video frames, pausing dynamically alongside the video when the AI kicks in for analysis.
+- **Loitering Detection**: Upgraded the Vision Engine to use YOLO's official object tracking (`model.track()`). The system now tracks how long an individual has been standing in the frame and triggers a specific behavior alert if they loiter for too long.
+- **AI Confidence Scoring**: The Vision Language Model now rates its own analysis certainty (0-100%). This score is displayed visually via a color-coded progress bar on the dashboard.
+
+## 2. Central Dispatch & Logs Portals
+- **Dispatch Center View**: A dedicated Next.js route (`/dispatch`) designed for a secondary monitor. If a `CRITICAL` or `HIGH` severity incident is logged, this screen pulses red and displays a massive alert that must be manually acknowledged by an operator.
+- **Logs Management**: A protected route (`/logs`) accessible only via the `.admin_access` token. It provides a clean table view of the entire SQLite database history, allowing admins to clear or delete specific logs.
+
+## 3. Core Architectural Upgrades
+- **SQLite Database Integration**: Ripped out the fragile in-memory Python list holding incident history and replaced it with a persistent SQLite database (`incidents.db`). Analysis logs now survive server restarts.
+- **Motion-Activated Optimization**: Implemented OpenCV Gaussian Blur and Absolute Differencing before the heavy YOLO block. The system calculates a motion score and entirely skips AI processing if the ATM scene is static, saving immense CPU/GPU resources.
+- **Strict Interval & Playback Sync**: 
+  - AI analysis triggers now strictly respect the user's custom interval timer, preventing API spam during continuous loitering events.
+  - Video uploads no longer stream at 100+ FPS. The backend extracts the original framerate and dynamically calculates playback sleep timers, resulting in perfect real-time streaming.
+
+---
+
 # Changelog: Version 3.5
 
 ## 1. The Admin Portal & Multi-Provider System

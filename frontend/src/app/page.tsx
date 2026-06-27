@@ -13,6 +13,8 @@ export default function Dashboard() {
   
   const [source, setSource] = useState("Webcam");
   const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedVideoPath, setUploadedVideoPath] = useState<string | null>(null);
   const [intervalSeconds, setIntervalSeconds] = useState(10);
   const [activeConfig, setActiveConfig] = useState<any>({ provider: "Loading...", model_name: "...", alerts_enabled: false });
 
@@ -38,8 +40,8 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append("source", source);
     formData.append("interval", intervalSeconds.toString());
-    if (source === "Upload Video" && file) {
-      formData.append("file", file);
+    if (source === "Upload Video" && uploadedVideoPath) {
+      formData.append("video_path", uploadedVideoPath);
     }
     await fetch('http://localhost:8000/api/start', {
       method: 'POST',
@@ -69,6 +71,7 @@ export default function Dashboard() {
                </span>
                <span className="text-neutral-300">{state.monitoring ? 'System Online' : 'System Offline'}</span>
              </div>
+             <a href="/logs" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Logs Database</a>
              <a href="/admin" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Admin Portal</a>
           </div>
         </div>
@@ -94,7 +97,33 @@ export default function Dashboard() {
               {source === "Upload Video" && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-200">
                   <label className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-2 block">Upload File</label>
-                  <input type="file" accept="video/mp4,video/avi,video/mov" onChange={(e) => e.target.files && setFile(e.target.files[0])} className="w-full text-sm text-neutral-400 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 cursor-pointer transition-all" />
+                  <input 
+                    type="file" 
+                    accept="video/mp4,video/avi,video/mov" 
+                    onChange={async (e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        const selectedFile = e.target.files[0];
+                        setFile(selectedFile);
+                        setIsUploading(true);
+                        const formData = new FormData();
+                        formData.append("file", selectedFile);
+                        try {
+                          const res = await fetch('http://localhost:8000/api/upload', {
+                            method: 'POST',
+                            body: formData
+                          });
+                          const data = await res.json();
+                          if (data.video_path) {
+                            setUploadedVideoPath(data.video_path);
+                          }
+                        } catch (err) {
+                          console.error(err);
+                        }
+                        setIsUploading(false);
+                      }
+                    }} 
+                    className="w-full text-sm text-neutral-400 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/20 cursor-pointer transition-all" 
+                  />
                 </div>
               )}
 
@@ -134,8 +163,12 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
-                <button onClick={handleStart} disabled={state.monitoring} className="relative overflow-hidden group bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed py-2 rounded-xl font-medium text-sm transition-all">
-                  <span className="relative z-10">Start Stream</span>
+                <button 
+                  onClick={handleStart} 
+                  disabled={state.monitoring || isUploading || (source === "Upload Video" && !uploadedVideoPath)} 
+                  className="relative overflow-hidden group bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed py-2 rounded-xl font-medium text-sm transition-all"
+                >
+                  <span className="relative z-10">{isUploading ? 'Extracting Audio...' : 'Start Stream'}</span>
                 </button>
                 <button onClick={handleStop} disabled={!state.monitoring} className="bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed py-2 rounded-xl font-medium text-sm transition-all">
                   Stop Stream
@@ -220,7 +253,21 @@ export default function Dashboard() {
                   <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-3">AI Incident Report</p>
                   {state.latest_report ? (
                     <div className="space-y-3 text-sm">
-                      <p><span className="text-neutral-400">Class:</span> <span className="font-medium text-white">{(state.latest_report as any).classification}</span></p>
+                      <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:items-center sm:space-x-4">
+                        <p><span className="text-neutral-400">Class:</span> <span className="font-medium text-white">{(state.latest_report as any).classification}</span></p>
+                        {(state.latest_report as any).confidence_score && (
+                          <div className="flex items-center space-x-2">
+                             <span className="text-neutral-400 text-xs uppercase tracking-wider">Confidence:</span>
+                             <div className="w-24 h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                               <div 
+                                 className={`h-full rounded-full ${(state.latest_report as any).confidence_score > 80 ? 'bg-emerald-500' : (state.latest_report as any).confidence_score > 50 ? 'bg-amber-500' : 'bg-rose-500'}`} 
+                                 style={{ width: `${(state.latest_report as any).confidence_score}%` }}
+                               ></div>
+                             </div>
+                             <span className="text-xs font-mono text-neutral-300">{(state.latest_report as any).confidence_score}%</span>
+                          </div>
+                        )}
+                      </div>
                       <p className="text-neutral-300 leading-relaxed"><span className="text-neutral-400">Analysis:</span> {(state.latest_report as any).description}</p>
                       <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-3 mt-4">
                         <p className="text-indigo-300 font-medium mb-1">Recommendation</p>
@@ -238,10 +285,13 @@ export default function Dashboard() {
           {/* History Section */}
           <div className="lg:col-span-12 mt-8">
             <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/5 shadow-2xl">
-              <h2 className="text-lg font-medium mb-6 flex items-center text-neutral-200">
-                <svg className="w-5 h-5 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Analysis History & Logs
-              </h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-medium flex items-center text-neutral-200">
+                  <svg className="w-5 h-5 mr-2 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Analysis History & Logs
+                </h2>
+                <a href="/logs" className="text-xs font-medium bg-neutral-800 hover:bg-neutral-700 text-white px-3 py-1.5 rounded-lg transition-colors border border-white/5">Manage Full Database</a>
+              </div>
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                 {state.history.length === 0 ? (
                   <p className="text-neutral-500 text-sm text-center py-8">No historical reports available yet.</p>

@@ -34,7 +34,7 @@ class IncidentAgent:
                 return default_config
         return default_config
 
-    def analyze_incident(self, image_input, detections):
+    def analyze_incident(self, image_input, detections, context_str=""):
         cfg = self._load_config()
         active_mode = cfg.get("active_mode", "local")
         provider = cfg.get("provider", "ollama")
@@ -44,9 +44,10 @@ class IncidentAgent:
         prompt = f"""
 Act as an expert Security Analyst. You are monitoring a live surveillance feed.
 I will provide you with an image and a list of objects detected by a YOLO model: {detections}.
+{f"CRITICAL SYSTEM ALERTS TO CONSIDER:\\n{context_str}" if context_str else ""}
 
 TASK:
-Analyze the image carefully. Identify any suspicious activity, safety threats, or unusual behavior based on the visual context.
+Analyze the image carefully. Identify any suspicious activity, safety threats, or unusual behavior based on the visual context and any provided system alerts.
 
 OUTPUT REQUIREMENTS:
 You MUST respond with a raw JSON object and nothing else.
@@ -54,6 +55,7 @@ DO NOT output the literal placeholder text. You must generate your own realistic
 Use the following exact keys:
 - "classification": Choose one of ["Normal", "Suspicious", "Critical"]
 - "severity": Choose one of ["Low", "Medium", "High"]
+- "confidence_score": Provide a number between 0 and 100 representing your confidence in this assessment.
 - "description": Write a 2-3 sentence descriptive summary of the scene.
 - "recommendation": Write a specific, actionable recommendation for security personnel.
 
@@ -61,6 +63,7 @@ EXAMPLE VALID RESPONSE:
 {{
     "classification": "Suspicious",
     "severity": "Medium",
+    "confidence_score": 85,
     "description": "A person is loitering near the ATM machine for an extended period without initiating a transaction.",
     "recommendation": "Dispatch a guard to check on the individual and ensure the area is secure."
 }}
@@ -85,6 +88,7 @@ EXAMPLE VALID RESPONSE:
             return {
                 "classification": "Error",
                 "severity": "Low",
+                "confidence_score": 0,
                 "description": f"Analysis failed: {str(e)}",
                 "recommendation": f"Check {provider} configuration and API keys."
             }

@@ -22,7 +22,7 @@ class VisionEngine:
             - detections (list of dicts: {label, conf, box})
             - timestamp
         """
-        results = self.model(frame, conf=config.CONFIDENCE_THRESHOLD, verbose=False)
+        results = self.model.track(frame, persist=True, conf=config.CONFIDENCE_THRESHOLD, verbose=False)
         
         detections = []
         
@@ -35,11 +35,13 @@ class VisionEngine:
             label = self.model.names[class_id]
             conf = float(box.conf[0])
             xyxy = box.xyxy[0].tolist() # Coordinates
+            track_id = int(box.id[0]) if box.id is not None else -1
             
             detections.append({
                 "label": label,
                 "confidence": round(conf, 2),
-                "box": xyxy
+                "box": xyxy,
+                "track_id": track_id
             })
 
         # Draw bounding boxes
