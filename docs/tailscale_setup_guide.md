@@ -1,4 +1,4 @@
-# 🌍 Remote Access Guide: Setting up Tailscale
+# Remote Access Guide: Setting up Tailscale
 
 This guide explains how to securely access the AwareX Multimodal Autonomous Surveillance System from anywhere in the world (like a college campus or a coffee shop) while the heavy AI processing runs safely on your powerful home PC.
 

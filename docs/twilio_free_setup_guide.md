@@ -1,4 +1,4 @@
-# 🚀 Completely Free Twilio Setup Guide for ATM Surveillance Alerts
+# Completely Free Twilio Setup Guide for ATM Surveillance Alerts
 
 This guide will walk you through configuring the **Twilio SMS & WhatsApp** alerting system built into this ATM Surveillance Agent. By utilizing Twilio's generous free trial, you can set up the entire notification and two-way control system **financially free of cost**.
 

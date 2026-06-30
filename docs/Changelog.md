@@ -1,0 +1,78 @@
+# AwareX: Multimodal Autonomous Surveillance System
+
+# Changelog: Version 5.0 (Stable)
+
+## 1. AwareX Rebranding & UI Polish
+- **Official Branding**: The project has officially been named **AwareX**. Next.js meta tags, dashboard headers, and metadata descriptions were thoroughly updated to reflect this new premium identity.
+- **Mobile Responsiveness**: The Central Dispatch Center (`/dispatch`) was entirely rewritten using Tailwind CSS responsive prefixes. It now flawlessly scales its typography and layout to look imposing on massive secondary monitors, while stacking neatly for thumb-friendly usage on mobile phones and tablets during an emergency.
+
+## 2. Dynamic IP Camera Manager (SQLite)
+- **Zero-Code Camera Deployment**: Removed rigid source selection buttons in favor of a dynamic dropdown menu powered by the SQLite database.
+- **Management Modal**: A brand new sleek dark-mode modal was added directly to the main dashboard. Non-technical security operators can now visually view, add, and securely delete external IP cameras (RTSP/HTTP streams) on the fly without touching a single line of code.
+- **Windows Webcam Stability Fix**: Integrated a `cv2.CAP_DSHOW` explicit hardware initialization fallback for Windows integer webcams, completely resolving silent freezing bugs when OpenCV struggles to locate standard cameras.
+
+## 3. Remote Access & Next.js Reverse Proxy
+- **Bypassing Windows Firewall**: Re-engineered the Next.js network layer (`next.config.ts`) to act as a stealthy reverse proxy. All frontend API requests to the Python backend (`:8000`) are now internally proxied through the Next.js server (`:3000`). This completely bypasses restrictive Windows Defender inbound port blocking, allowing seamless LAN access.
+- **Tailscale P2P VPN Guide**: Shipped a comprehensive setup document detailing how to establish a zero-configuration mesh network to securely stream AwareX feeds and incident logs from anywhere in the world. **[View Tailscale Setup Guide](ailscale_setup_guide.md)**
+
+---
+
+# Changelog: Version 4.0
+
+## 1. Advanced Threat Detection Features
+- **Multi-Modal Audio Processing**: The system now listens as well as it watches.
+  - *Live Webcam*: Monitors the host machine's microphone in the background for loud volume spikes (screams, glass breaking) and injects an alert directly into the AI's reasoning context.
+  - *Video Files*: Uploaded video files are automatically processed via FFmpeg. The audio track is extracted and played in perfect sync with the video frames, pausing dynamically alongside the video when the AI kicks in for analysis.
+- **Loitering Detection**: Upgraded the Vision Engine to use YOLO's official object tracking (`model.track()`). The system now tracks how long an individual has been standing in the frame and triggers a specific behavior alert if they loiter for too long.
+- **AI Confidence Scoring**: The Vision Language Model now rates its own analysis certainty (0-100%). This score is displayed visually via a color-coded progress bar on the dashboard.
+
+## 2. Central Dispatch & Logs Portals
+- **Dispatch Center View**: A dedicated Next.js route (`/dispatch`) designed for a secondary monitor. If a `CRITICAL` or `HIGH` severity incident is logged, this screen pulses red and displays a massive alert that must be manually acknowledged by an operator.
+- **Logs Management**: A protected route (`/logs`) accessible only via the `.admin_access` token. It provides a clean table view of the entire SQLite database history, allowing admins to clear or delete specific logs.
+
+## 3. Core Architectural Upgrades
+- **SQLite Database Integration**: Ripped out the fragile in-memory Python list holding incident history and replaced it with a persistent SQLite database (`incidents.db`). Analysis logs now survive server restarts.
+- **Motion-Activated Optimization**: Implemented OpenCV Gaussian Blur and Absolute Differencing before the heavy YOLO block. The system calculates a motion score and entirely skips AI processing if the ATM scene is static, saving immense CPU/GPU resources.
+- **Strict Interval & Playback Sync**: 
+  - AI analysis triggers now strictly respect the user's custom interval timer, preventing API spam during continuous loitering events.
+  - Video uploads no longer stream at 100+ FPS. The backend extracts the original framerate and dynamically calculates playback sleep timers, resulting in perfect real-time streaming.
+
+---
+
+# Changelog: Version 3.5
+
+## 1. The Admin Portal & Multi-Provider System
+We introduced a brand new model selection system, allowing the application to utilize both local and free open-source cloud models for visual reasoning.
+
+- **Passwordless Security**: A separate Streamlit frontend (`admin.py`) was created. To access it, you simply need the hidden `.admin_access` file in your root directory. This provides robust security without the friction of typing passwords.
+- **Multi-Provider Support**: The backend agent (`core/agent.py`) was entirely rewritten. It now dynamically routes image data to the provider you select in the Admin Portal. Supported providers include:
+  - Local **Ollama** (e.g., Moondream)
+  - **Google Gemini** (Gemini 1.5 Flash/Pro)
+  - **Groq** (Llama 3.2 Vision)
+  - **Hugging Face** Inference API
+- **Unified Launch Script**: `run.bat` was refactored. It now uses the Windows `start` command to cleanly open both the user dashboard and the admin portal in their own dedicated terminal windows simultaneously.
+- **Integrated Navigation**: A smart link was added to the main app's sidebar. If you have admin access, you'll see a clickable link to jump straight to the Admin Portal. Additionally, the main app displays a subtle indicator showing which VLM is currently active.
+
+## 2. Webhook & Dashboard Synchronization
+Previously, the Twilio webhook server was completely detached from the Streamlit UI.
+- **Shared State**: We introduced a `status.json` file to bridge the gap.
+- **Remote Stopping**: If an authority figure replies "Stop" to a Twilio alert via WhatsApp or SMS, the `webhook_server.py` writes this command to `status.json`. The Streamlit app polls this file and will safely halt the live video feed automatically.
+
+## 3. UI & UX Refinements
+Based on visual feedback and usability testing, several dashboard tweaks were applied:
+- **Location Context Removed**: The manual "Location Context" dropdown was removed. The VLM is now trusted to infer the environment entirely from the visual feed, decluttering the sidebar.
+- **Initial State**: The dashboard now correctly states it is `"Waiting..."` for input upon launch, rather than falsely displaying `"Analysing..."`.
+- **Dynamic Scrollbar**: Custom CSS was injected into the AI Incident Report container (`max-height: 200px; overflow-y: auto;`), ensuring that highly detailed reports generated by advanced cloud models won't break the page layout.
+
+## 4. Performance & Bug Fixes
+Several underlying bugs impacting performance and stability were patched:
+- **Frame Skipping logic**: The `config.Frame_Skip` parameter was finally integrated into the main `while` loop. The YOLO model now skips processing every single frame, massively reducing CPU/GPU overhead.
+- **Prompt Parroting Fix**: Smaller local models (like Moondream) were outputting literal template text. The VLM prompt was entirely re-engineered with explicit negative constraints and a concrete "Example Valid Response" to force authentic reasoning.
+- **JSON Parsing Robustness**: Added regex-based fallback logic to `agent.py` to extract JSON from model responses even if the VLM hallucinates markdown formatting.
+- **Dynamic Timezones**: Removed the hardcoded `"IST"` strings in incident reports, replacing them with dynamic system timezone fetching.
+- **Temp File Error `[WinError 32]`**: When uploading videos, `NamedTemporaryFile` locks the file in Python on Windows. We added an explicit `tfile.close()` command right after the file is copied to disk. This completely resolves the scary red error logs and ensures temporary storage is properly cleaned up after use.
+
+## 5. Continuous Alerting System
+We updated the Twilio alert logic (`core/decision.py`) to keep authorities continuously informed rather than only alerting on critical emergencies.
+- **Always-On Alerts**: The system now pushes incident reports to WhatsApp or SMS during every analysis interval, regardless of whether the threat level is High, Medium, or Low.
+- **Dynamic Message Formatting**: To prevent alert fatigue and clearly communicate urgency, the outgoing messages are now dynamically formatted. The message title and emojis instantly convey the severity (e.g., 🚨 CRITICAL, ⚠️ WARNING, or ℹ️ INFO) so the recipient knows whether immediate action is required or if it's just a routine monitoring update.
