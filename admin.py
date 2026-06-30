@@ -77,8 +77,42 @@ if st.button("💾 Save Configuration"):
         "active_mode": active_mode,
         "provider": provider,
         "model_name": model_name,
-        "api_key": api_key
+        "api_key": api_key,
+        "twilio_sid": config.get("twilio_sid", ""),
+        "twilio_auth": config.get("twilio_auth", ""),
+        "twilio_from": config.get("twilio_from", ""),
+        "twilio_to": config.get("twilio_to", ""),
+        "twilio_type": config.get("twilio_type", "SMS"),
+        "alerts_enabled": config.get("alerts_enabled", False)
     }
     with open(CONFIG_FILE, "w") as f:
         json.dump(new_config, f, indent=4)
     st.success(f"Configuration saved! System will now use {provider} ({model_name}).")
+
+st.markdown("---")
+st.subheader("📱 Twilio Alert Settings")
+st.info("Configure SMS/WhatsApp alerts for high severity incidents.")
+
+alerts_enabled = st.checkbox("Enable Twilio Alerts", value=config.get("alerts_enabled", False))
+twilio_type = st.radio("Alert Type:", ("SMS", "WhatsApp"), index=0 if config.get("twilio_type", "SMS") == "SMS" else 1)
+twilio_sid = st.text_input("Twilio Account SID:", type="password", value=config.get("twilio_sid", ""))
+twilio_auth = st.text_input("Twilio Auth Token:", type="password", value=config.get("twilio_auth", ""))
+twilio_from = st.text_input("Twilio Sender Number (e.g. +1234567890):", value=config.get("twilio_from", ""))
+twilio_to = st.text_input("Receiver Phone Number (e.g. +1234567890):", value=config.get("twilio_to", ""))
+
+if st.button("💾 Save Twilio Settings"):
+    new_config = {
+        "active_mode": active_mode,
+        "provider": provider,
+        "model_name": model_name,
+        "api_key": api_key,
+        "twilio_sid": twilio_sid,
+        "twilio_auth": twilio_auth,
+        "twilio_from": twilio_from,
+        "twilio_to": twilio_to,
+        "twilio_type": twilio_type,
+        "alerts_enabled": alerts_enabled
+    }
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(new_config, f, indent=4)
+    st.success("Twilio alert settings saved successfully!")

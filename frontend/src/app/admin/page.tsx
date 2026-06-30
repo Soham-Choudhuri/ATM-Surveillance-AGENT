@@ -217,7 +217,11 @@ export default function AdminPortal() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-white/5 flex justify-end">
+            <div className="pt-6 border-t border-white/5 flex items-center justify-between">
+              <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer" className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors font-medium flex items-center gap-1">
+                 Twilio Developer Dashboard
+                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+              </a>
               <button 
                 onClick={handleSave} 
                 className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-medium text-sm transition-all flex items-center shadow-lg shadow-indigo-500/20"
