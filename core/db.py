@@ -18,6 +18,18 @@ def init_db():
             details TEXT
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cameras (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            url TEXT NOT NULL
+        )
+    ''')
+    
+    # Seed default camera if table is empty
+    cursor.execute('SELECT COUNT(*) FROM cameras')
+    if cursor.fetchone()[0] == 0:
+        cursor.execute('INSERT INTO cameras (name, url) VALUES (?, ?)', ('Local Webcam', '0'))
     conn.commit()
     conn.close()
 
@@ -67,6 +79,30 @@ def clear_all_logs():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('DELETE FROM logs')
+    conn.commit()
+    conn.close()
+
+# Camera DB Functions
+def get_cameras():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, name, url FROM cameras ORDER BY id ASC')
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+def add_camera(name: str, url: str):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO cameras (name, url) VALUES (?, ?)', (name, url))
+    conn.commit()
+    conn.close()
+
+def delete_camera(camera_id: int):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM cameras WHERE id = ?', (camera_id,))
     conn.commit()
     conn.close()
 

@@ -1,3 +1,22 @@
+# AwareX: Multimodal Autonomous Surveillance System
+
+# Changelog: Version 5.0 (Stable)
+
+## 1. AwareX Rebranding & UI Polish
+- **Official Branding**: The project has officially been named **AwareX**. Next.js meta tags, dashboard headers, and metadata descriptions were thoroughly updated to reflect this new premium identity.
+- **Mobile Responsiveness**: The Central Dispatch Center (`/dispatch`) was entirely rewritten using Tailwind CSS responsive prefixes. It now flawlessly scales its typography and layout to look imposing on massive secondary monitors, while stacking neatly for thumb-friendly usage on mobile phones and tablets during an emergency.
+
+## 2. Dynamic IP Camera Manager (SQLite)
+- **Zero-Code Camera Deployment**: Removed rigid source selection buttons in favor of a dynamic dropdown menu powered by the SQLite database.
+- **Management Modal**: A brand new sleek dark-mode modal was added directly to the main dashboard. Non-technical security operators can now visually view, add, and securely delete external IP cameras (RTSP/HTTP streams) on the fly without touching a single line of code.
+- **Windows Webcam Stability Fix**: Integrated a `cv2.CAP_DSHOW` explicit hardware initialization fallback for Windows integer webcams, completely resolving silent freezing bugs when OpenCV struggles to locate standard cameras.
+
+## 3. Remote Access & Next.js Reverse Proxy
+- **Bypassing Windows Firewall**: Re-engineered the Next.js network layer (`next.config.ts`) to act as a stealthy reverse proxy. All frontend API requests to the Python backend (`:8000`) are now internally proxied through the Next.js server (`:3000`). This completely bypasses restrictive Windows Defender inbound port blocking, allowing seamless LAN access.
+- **Tailscale P2P VPN Guide**: Shipped a comprehensive setup document (`docs/tailscale_setup_guide.md`) detailing how to establish a zero-configuration mesh network to securely stream AwareX feeds and incident logs from anywhere in the world.
+
+---
+
 # Changelog: Version 4.0
 
 ## 1. Advanced Threat Detection Features

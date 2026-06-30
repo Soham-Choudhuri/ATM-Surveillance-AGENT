@@ -45,7 +45,7 @@ echo.
 rem Launch all three servers in their own dedicated windows
 start "AI Surveillance - Ollama Engine" cmd /k "ollama serve"
 start "AI Surveillance - Backend API" cmd /k "call %VENV_DIR%\Scripts\activate.bat && uvicorn backend.main:app --host 0.0.0.0 --port 8000"
-start "AI Surveillance - Web UI" cmd /k "cd frontend && npm run dev"
+start "AI Surveillance - Web UI" cmd /k "cd frontend && npm run dev -- -H 0.0.0.0"
 
 rem Launch a fourth window that remains open and empty for your own manual commands
 start "AI Surveillance - Interactive Console" cmd /k "echo [READY] This terminal is initialized with your portable toolchain. You can run manual commands here."

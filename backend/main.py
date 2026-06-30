@@ -30,7 +30,7 @@ from core.vision import VisionEngine
 from core.agent import IncidentAgent
 from core.decision import evaluate_threat
 from comms.alerts import send_alert
-from core.db import insert_log, get_logs, delete_log, clear_all_logs
+from core.db import insert_log, get_logs, delete_log, clear_all_logs, get_cameras, add_camera, delete_camera
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -134,7 +134,7 @@ def upload_video(file: UploadFile = File(...)):
         return JSONResponse({"status": "Error", "message": str(e)}, status_code=500)
 
 @app.post("/api/start")
-def start_monitoring(source: str = Form(...), interval: int = Form(10), video_path: str = Form(None)):
+def start_monitoring(source: str = Form(...), interval: int = Form(10), video_path: str = Form(None), camera_url: str = Form(None)):
     if state.monitoring:
         return {"status": "Already monitoring"}
         
@@ -154,7 +154,26 @@ def start_monitoring(source: str = Form(...), interval: int = Form(10), video_pa
                 logger.error(f"Could not open audio stream: {e}")
                 state.audio_stream = None
     else:
-        state.cap = cv2.VideoCapture(0)
+        cam_input = 0
+        if camera_url:
+            if camera_url.isdigit():
+                cam_input = int(camera_url)
+            else:
+                cam_input = camera_url
+                
+        if isinstance(cam_input, int):
+            # Try DirectShow first for Windows local webcams, fallback to default
+            state.cap = cv2.VideoCapture(cam_input, cv2.CAP_DSHOW)
+            if not state.cap.isOpened():
+                state.cap = cv2.VideoCapture(cam_input)
+        else:
+            # RTSP/IP cameras
+            state.cap = cv2.VideoCapture(cam_input)
+            
+        if not state.cap.isOpened():
+            logger.error(f"Failed to open camera: {cam_input}")
+            return JSONResponse({"status": "Error", "message": f"Camera access failed: {cam_input}"}, status_code=500)
+            
         state.fps = 30.0
         state.audio_data = None # Clear any previous video audio
         
@@ -189,6 +208,7 @@ def generate_frames():
     frame_count = 0
     while True:
         if not state.monitoring or state.cap is None or not state.cap.isOpened():
+            state.monitoring = False
             break
             
         success, frame = state.cap.read()
@@ -199,7 +219,19 @@ def generate_frames():
                 state.is_analyzing = False
                 insert_log("Final Video Report", final_rep.get("severity", "LOW").upper(), final_rep.get("description", ""), final_rep)
                 state.frame_reports = []
+            
             state.monitoring = False
+            if state.cap:
+                state.cap.release()
+                state.cap = None
+            if state.audio_stream:
+                state.audio_stream.stop()
+                state.audio_stream.close()
+                state.audio_stream = None
+            state.threat_level = "Waiting..."
+            state.latest_report = None
+            state.object_count = 0
+            state.last_gray_frame = None
             break
 
         frame_count += 1
@@ -363,6 +395,22 @@ async def save_config(request: Request):
     with open(CONFIG_FILE, "w") as f:
         json.dump(data, f, indent=4)
     return {"status": "Saved"}
+
+# Camera Endpoints
+@app.get("/api/cameras")
+def api_get_cameras():
+    return get_cameras()
+
+@app.post("/api/cameras")
+async def api_add_camera(request: Request):
+    data = await request.json()
+    add_camera(data.get("name"), data.get("url"))
+    return {"status": "Added"}
+
+@app.delete("/api/cameras/{cam_id}")
+def api_delete_camera(cam_id: int):
+    delete_camera(cam_id)
+    return {"status": "Deleted"}
 
 # Logs Endpoints
 @app.get("/api/logs")

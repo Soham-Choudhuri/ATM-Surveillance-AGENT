@@ -9,7 +9,7 @@ export default function LogsDatabase() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/logs');
+      const res = await fetch(`/api/logs`);
       const data = await res.json();
       setLogs(data);
     } catch (e) {
@@ -19,7 +19,7 @@ export default function LogsDatabase() {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/admin_check')
+    fetch(`/api/admin_check`)
       .then(res => res.json())
       .then(data => {
         setAccess(data.access);
@@ -33,7 +33,7 @@ export default function LogsDatabase() {
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this log?")) return;
     try {
-      await fetch(`http://localhost:8000/api/logs/${id}`, { method: 'DELETE' });
+      await fetch(`/api/logs/${id}`, { method: 'DELETE' });
       fetchLogs();
     } catch (e) {
       console.error(e);
@@ -43,7 +43,7 @@ export default function LogsDatabase() {
   const handleClearAll = async () => {
     if (!confirm("Are you sure you want to clear ALL logs? This cannot be undone.")) return;
     try {
-      await fetch(`http://localhost:8000/api/logs`, { method: 'DELETE' });
+      await fetch(`/api/logs`, { method: 'DELETE' });
       fetchLogs();
     } catch (e) {
       console.error(e);
@@ -68,7 +68,7 @@ export default function LogsDatabase() {
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3 text-indigo-400">
              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
-             <h1 className="text-xl font-semibold">Logs Database Management</h1>
+             <h1 className="text-xl font-semibold">AwareX | Logs Database</h1>
           </div>
           <div className="flex items-center space-x-4">
             <a href="/admin" className="text-sm font-medium text-neutral-400 hover:text-white transition-colors">Admin Portal</a>
