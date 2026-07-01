@@ -93,54 +93,7 @@ EXAMPLE VALID RESPONSE:
                 "recommendation": f"Check {provider} configuration and API keys."
             }
 
-    def generate_final_report(self, frame_reports):
-        cfg = self._load_config()
-        active_mode = cfg.get("active_mode", "local")
-        provider = cfg.get("provider", "ollama")
-        model_name = cfg.get("model_name", config.LOCAL_LLM_MODEL)
-        api_key = cfg.get("api_key", "")
-        
-        reports_json = json.dumps(frame_reports, indent=2)
-        prompt = f"""
-Act as an expert Security Analyst. You have finished monitoring a surveillance video.
-Below is the timeline of incidents detected during the video:
-{reports_json}
 
-TASK:
-Summarize the timeline into an Overall Final Report.
-
-OUTPUT REQUIREMENTS:
-You MUST respond with a raw JSON object and nothing else.
-Use the following exact keys:
-- "classification": The overall classification of the video (e.g. "Normal", "Suspicious", "Critical")
-- "severity": The overall highest severity ("Low", "Medium", "High")
-- "description": A 2-3 sentence summary of the entire video.
-- "recommendation": What action should be taken based on the entirety of the video.
-"""
-        dummy_img = Image.new('RGB', (1, 1))
-
-        try:
-            if active_mode == "local" or provider == "ollama":
-                response_text = self._call_ollama(dummy_img, prompt, model_name)
-            elif provider == "gemini":
-                response_text = self._call_gemini(dummy_img, prompt, model_name, api_key)
-            elif provider == "groq":
-                response_text = self._call_groq(dummy_img, prompt, model_name, api_key)
-            elif provider == "huggingface":
-                response_text = self._call_huggingface(dummy_img, prompt, model_name, api_key)
-            else:
-                raise ValueError(f"Unknown provider: {provider}")
-                
-            return self._parse_json(response_text)
-            
-        except Exception as e:
-            logger.error(f"Final Report Generation Failed ({provider}): {e}")
-            return {
-                "classification": "Error",
-                "severity": "Low",
-                "description": f"Failed to generate final report: {str(e)}",
-                "recommendation": ""
-            }
 
     def _parse_json(self, text_response):
         text_response = text_response.strip()

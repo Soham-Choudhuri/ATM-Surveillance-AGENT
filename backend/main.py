@@ -56,7 +56,6 @@ class AppState:
         self.latest_report = None
         self.is_analyzing = False
         self.analysis_interval = 10
-        self.frame_reports = []
         self.last_gray_frame = None
         self.audio_context = None
         self.person_trackers = {}
@@ -180,7 +179,6 @@ def start_monitoring(source: str = Form(...), interval: int = Form(10), video_pa
     state.monitoring = True
     state.last_analysis_time = 0
     state.analysis_interval = interval
-    state.frame_reports = []
     state.person_trackers = {}
     
     if AUDIO_AVAILABLE and source != "Upload Video":
@@ -213,13 +211,6 @@ def generate_frames():
             
         success, frame = state.cap.read()
         if not success:
-            if state.frame_reports:
-                state.is_analyzing = True
-                final_rep = agent.generate_final_report(state.frame_reports)
-                state.is_analyzing = False
-                insert_log("Final Video Report", final_rep.get("severity", "LOW").upper(), final_rep.get("description", ""), final_rep)
-                state.frame_reports = []
-            
             state.monitoring = False
             if state.cap:
                 state.cap.release()
@@ -316,7 +307,6 @@ def generate_frames():
                             
                         incident_report = agent.analyze_incident(pil_image, detections, context_str)
                         state.latest_report = incident_report
-                        state.frame_reports.append(incident_report)
                         
                         # Decision Engine
                         severity = incident_report.get("severity", "LOW").upper()
@@ -328,7 +318,10 @@ def generate_frames():
                         action_log, requires_alert, alert_msg = evaluate_threat(incident_report)
                         
                         # Log to DB
-                        insert_log("Analysis", severity, classification, incident_report)
+                        description_text = incident_report.get("description", classification)
+                        if not isinstance(description_text, str):
+                            description_text = classification
+                        insert_log("Analysis", severity, description_text, incident_report)
                         
                         if requires_alert:
                             send_alert(alert_msg)
