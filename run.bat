@@ -50,6 +50,10 @@ echo [INFO] Opening Portable Interactive Console...
 echo =======================================================
 echo.
 
+rem Kill any existing Ollama processes to prevent port conflicts
+echo [INFO] Terminating any existing Ollama processes...
+taskkill /f /im ollama.exe >nul 2>&1
+
 rem Launch all three servers in their own dedicated windows
 start "AI Surveillance - Ollama Engine" cmd /k "ollama serve"
 start "AI Surveillance - Backend API" cmd /k "call %VENV_DIR%\Scripts\activate.bat && uvicorn backend.main:app --host 0.0.0.0 --port 8000"
