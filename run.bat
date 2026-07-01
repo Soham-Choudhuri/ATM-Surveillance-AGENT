@@ -31,6 +31,14 @@ rem Install requirements
 echo [INFO] Checking and installing requirements from requirements.txt...
 pip install -r requirements.txt
 
+rem Install frontend dependencies
+echo [INFO] Checking and installing frontend dependencies...
+if exist "frontend\package.json" (
+    cd frontend
+    call npm install
+    cd ..
+)
+
 rem Run the Unified Application
 echo.
 echo =======================================================
